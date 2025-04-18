@@ -5,8 +5,9 @@ import "time"
 type RegisterRequest struct {
 	Email     string `json:"email" validate:"required,email"`
 	Password  string `json:"password" validate:"required,min=8,strong_password"`
+	Username  string `json:"username" validate:"required,min=3,max=20,alphanum"`
 	FirstName string `json:"first_name" validate:"required"`
-	LastName  string `json:"last_name" validate:"required"`
+	LastName  string `json:"last_name"`
 }
 
 type LoginRequest struct {
@@ -17,6 +18,7 @@ type LoginRequest struct {
 type UserResponse struct {
 	ID           uint      `json:"id"`
 	Email        string    `json:"email"`
+	Username     string    `json:"username"`
 	FirstName    string    `json:"first_name"`
 	LastName     string    `json:"last_name"`
 	StorageUsed  float64   `json:"storage_used"`
@@ -29,6 +31,7 @@ func (u *User) ToResponse() *UserResponse {
 	return &UserResponse{
 		ID:           u.ID,
 		Email:        u.Email,
+		Username:     u.Username,
 		FirstName:    u.FirstName,
 		LastName:     u.LastName,
 		StorageUsed:  u.StorageUsed,
@@ -40,6 +43,6 @@ func (u *User) ToResponse() *UserResponse {
 
 type AuthResponse struct {
 	User         *UserResponse `json:"user"`
-	Token        string        `json:"token"`
+	AccessToken  string        `json:"access_token"`
 	RefreshToken string        `json:"refresh_token"`
 }

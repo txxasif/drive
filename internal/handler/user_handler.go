@@ -63,7 +63,7 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	response.JSON(w, http.StatusOK, map[string]interface{}{
 		"user":          token.User,
-		"access_token":  token.Token,
+		"access_token":  token.AccessToken,
 		"refresh_token": token.RefreshToken,
 	})
 }

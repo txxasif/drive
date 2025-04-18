@@ -12,11 +12,12 @@ import (
 )
 
 var (
-	ErrEmailAlreadyExists = errors.New("user with this email already exists")
-	ErrInvalidCredentials = errors.New("invalid email or password")
-	ErrUserNotFound       = errors.New("user not found")
-	ErrInvalidToken       = errors.New("invalid token")
-	ErrUnauthorized       = errors.New("unauthorized")
+	ErrEmailAlreadyExists    = errors.New("user with this email already exists")
+	ErrInvalidCredentials    = errors.New("invalid email or password")
+	ErrUserNotFound          = errors.New("user not found")
+	ErrInvalidToken          = errors.New("invalid token")
+	ErrUnauthorized          = errors.New("unauthorized")
+	ErrUsernameAlreadyExists = errors.New("user with this username already exists")
 )
 
 type RefreshResponse struct {
@@ -60,6 +61,17 @@ func (s *authService) Register(ctx context.Context, req *model.RegisterRequest) 
 		return nil, ErrEmailAlreadyExists
 	}
 
+	existingUser, err = s.userRepo.GetByUsername(ctx, req.Username)
+	if err != nil {
+		logger.Error("Error checking existing user", zap.Error(err))
+		return nil, fmt.Errorf("error checking existing user: %w", err)
+	}
+
+	if existingUser != nil {
+		logger.Warn("User already exists")
+		return nil, ErrUsernameAlreadyExists
+	}
+
 	hashedPassword, err := util.HashPassword(req.Password)
 	if err != nil {
 		logger.Error("Error hashing password", util.WithError(err))
@@ -68,6 +80,7 @@ func (s *authService) Register(ctx context.Context, req *model.RegisterRequest) 
 
 	user := &model.User{
 		Email:        req.Email,
+		Username:     req.Username,
 		Password:     hashedPassword,
 		FirstName:    req.FirstName,
 		LastName:     req.LastName,
@@ -93,11 +106,9 @@ func (s *authService) Register(ctx context.Context, req *model.RegisterRequest) 
 
 	logger.Info("User registered successfully")
 
-	user.Password = ""
-
 	return &model.AuthResponse{
 		User:         user.ToResponse(),
-		Token:        token,
+		AccessToken:  token,
 		RefreshToken: refreshToken,
 	}, nil
 }
@@ -135,12 +146,9 @@ func (s *authService) Login(ctx context.Context, req *model.LoginRequest) (*mode
 
 	logger.Info("User logged in successfully")
 
-	// Clear sensitive data
-	user.Password = ""
-
 	return &model.AuthResponse{
 		User:         user.ToResponse(),
-		Token:        accessToken,
+		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 	}, nil
 }

@@ -13,6 +13,7 @@ This document provides an in-depth explanation of how the simplified validation 
 7. [Error Responses](#error-responses)
 8. [Best Practices](#best-practices)
 9. [Examples](#examples)
+10. [Technical Details](#technical-details)
 
 ## Overview
 
@@ -58,17 +59,14 @@ func init() {
 
 The following key functions handle validation:
 
-- `ValidateStruct(i interface{}) []string` - Validates a struct and returns a list of error messages
 - `ValidateStructWithFields(i interface{}) map[string]string` - Validates a struct and returns field-mapped errors
-- `ValidateRequest(r *http.Request, dst interface{}) []string` - Decodes and validates an HTTP request body
 - `ValidateRequestWithFields(r *http.Request, dst interface{}) map[string]string` - Decodes and validates with field-mapped errors
 
 ### 3. Error Formatting
 
 Error messages are formatted in a user-friendly way:
 
-- `formatValidationError(err validator.FieldError) string` - Formats a complete validation error with field name
-- `formatValidationErrorMessage(err validator.FieldError) string` - Formats just the message part
+- `formatValidationErrorMessage(err validator.FieldError) string` - Formats just the message part of a validation error
 
 ### 4. Response Utilities
 
@@ -94,6 +92,8 @@ When you call `ValidateRequestWithFields()`:
 2. It then calls `validate.Struct(dst)` to validate against the struct's tags
 3. If there are errors, it builds a map of field name -> error message
 4. Your handler sends this map using `response.ValidationErrorWithFields()`
+
+This is the preferred method for validating requests in handlers, as it provides field-specific error information which creates a better user experience.
 
 ## Validation Tags
 
@@ -283,7 +283,7 @@ type RegisterRequest struct {
 
 ### 2. Use Consistent Validation Patterns
 
-All handlers should follow the same validation pattern:
+All handlers should follow the same validation pattern using `ValidateRequestWithFields`:
 
 ```go
 // Standard validation pattern
@@ -292,6 +292,8 @@ if fieldErrors := util.ValidateRequestWithFields(r, &dto); fieldErrors != nil {
     return
 }
 ```
+
+This pattern provides field-specific error messages that are more helpful to API consumers than generic validation errors.
 
 ### 3. Group Related Validations
 
@@ -393,6 +395,43 @@ func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
   }
 }
 ```
+
+## Technical Details
+
+### Understanding the Underscore `_` in Go
+
+In the validator registration code, you'll notice lines like this:
+
+```go
+_ = validate.RegisterValidation("strong_password", strongPassword)
+```
+
+The underscore `_` here is a special identifier in Go that indicates we're intentionally discarding the return value. Here's what's happening:
+
+1. `RegisterValidation` returns an error if the registration fails
+2. The `_` tells Go that we're aware of this return value, but we've chosen not to handle it
+3. Without the `_`, Go would give a compiler error because we're not using the returned error
+
+This is a common pattern in Go when:
+
+- You expect the operation to succeed in normal circumstances
+- You're not planning to handle errors from this particular function
+- The application can continue even if this specific operation fails
+
+If you wanted to handle errors, you could replace the `_` with a variable name:
+
+```go
+if err := validate.RegisterValidation("strong_password", strongPassword); err != nil {
+    // Handle the error, perhaps by logging it or panicking
+    log.Fatalf("Failed to register validator: %v", err)
+}
+```
+
+For our validator initialization, we're using the simpler approach because:
+
+1. Registration failures are rare and would indicate a programming error
+2. We're registering these validators during initialization, not in response to user input
+3. If registration did fail, there's not much we could do to recover at runtime
 
 This comprehensive validation system makes it easy to:
 
