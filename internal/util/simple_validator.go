@@ -13,6 +13,7 @@ import (
 
 var validate *validator.Validate
 
+// hi
 func init() {
 	validate = validator.New()
 
