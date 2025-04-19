@@ -10,5 +10,6 @@ func AuthRoutes(r chi.Router, handler *handler.Handler) {
 	r.Route("/auth", func(r chi.Router) {
 		r.Post("/register", handler.UserHandler.Register)
 		r.Post("/login", handler.UserHandler.Login)
+		r.Post("/oauth/login", handler.OAuthHandler.Login)
 	})
 }

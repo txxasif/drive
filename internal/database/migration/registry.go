@@ -12,9 +12,9 @@ func RegisterMigrations(db *gorm.DB, logger *util.Logger) *Migrator {
 
 	// Register migrations in order
 	migrator.AddMigration(&CreateUsersTable{})
-	// Add more migrations here as your application grows
-	// migrator.AddMigration(&CreateFoldersTable{})
-	// migrator.AddMigration(&CreateFilesTable{})
+	migrator.AddMigration(&CreateFoldersTable{})
+	migrator.AddMigration(&CreateFilesTable{})
+	migrator.AddMigration(&CreateSharesTable{})
 
 	return migrator
 }

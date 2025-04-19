@@ -46,7 +46,7 @@ func NewApp(cfg *config.Config) (*App, error) {
 	})
 
 	repo := repository.NewRepositories(db)
-	services := service.NewServices(*repo, jwtService, logger)
+	services := service.NewServices(*repo, jwtService, logger, cfg)
 	handler := handler.NewHandler(services)
 	routes := routes.SetupRoutes(handler, services.Auth)
 

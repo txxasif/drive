@@ -41,6 +41,7 @@ drive/
 
 - User registration with email and password
 - User authentication with JWT
+- OAuth authentication with Google and Facebook
 - User profile management (get, update, delete)
 - Secure password handling with bcrypt
 - Token-based authentication
@@ -58,9 +59,83 @@ drive/
 - `PUT /api/users/{id}` - Update user profile (requires authentication)
 - `DELETE /api/users/{id}` - Delete user (requires authentication)
 
+### OAuth Authentication
+
+- `POST /api/auth/oauth/login` - Authenticate with OAuth providers (Google, Facebook)
+
 ### Health Check
 
 - `GET /health` - Service health check
+
+## OAuth Integration
+
+The application supports social login via Google and Facebook OAuth:
+
+### Setup OAuth Providers
+
+1. **Google OAuth Setup**:
+
+   - Create a project in the [Google Developer Console](https://console.developers.google.com/)
+   - Configure OAuth consent screen
+   - Create OAuth client ID credentials for a web application
+   - Add authorized redirect URIs for your application
+   - Update the `.env` file with your Google credentials:
+     ```
+     GOOGLE_CLIENT_ID=your-client-id
+     GOOGLE_CLIENT_SECRET=your-client-secret
+     ```
+
+2. **Facebook OAuth Setup**:
+   - Create an app in the [Facebook Developer Portal](https://developers.facebook.com/)
+   - Add Facebook Login product to your app
+   - Configure Valid OAuth Redirect URIs
+   - Update the `.env` file with your Facebook credentials:
+     ```
+     FACEBOOK_APP_ID=your-app-id
+     FACEBOOK_APP_SECRET=your-app-secret
+     ```
+
+### Using OAuth in Your Application
+
+The backend expects the client (frontend) to handle the initial OAuth flow:
+
+1. Client initiates OAuth flow with the provider (Google/Facebook)
+2. Client receives the access token from the provider
+3. Client sends the token to the backend API endpoint (`/api/auth/oauth/login`)
+4. Backend validates the token with the provider and:
+   - Creates a new user account if the email doesn't exist
+   - Returns JWT tokens for existing users
+
+Example request to authenticate with Google:
+
+```json
+POST /api/auth/oauth/login
+{
+  "token": "google-oauth-access-token",
+  "provider": "google"
+}
+```
+
+Example response:
+
+```json
+{
+  "user": {
+    "id": 1,
+    "email": "user@example.com",
+    "username": "user1234",
+    "first_name": "John",
+    "last_name": "Doe",
+    "provider": "google",
+    "storage_used": 0,
+    "storage_limit": 15000,
+    "created_at": "2023-09-10T15:30:45Z",
+    "updated_at": "2023-09-10T15:30:45Z"
+  },
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
 
 ## Getting Started
 
@@ -112,4 +187,4 @@ The application implements consistent error handling patterns:
 - Role-based authorization
 - Rate limiting
 - API documentation with Swagger
-- Integration with object storage for file management 
+- Integration with object storage for file management

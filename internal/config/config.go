@@ -30,6 +30,16 @@ type JWT struct {
 	RefreshExpiresIn time.Duration
 }
 
+// OAuth holds OAuth provider configuration
+type OAuth struct {
+	// Google OAuth configuration
+	GoogleClientID     string
+	GoogleClientSecret string
+	// Facebook OAuth configuration
+	FacebookAppID     string
+	FacebookAppSecret string
+}
+
 // Logging holds logging configuration
 type Logging struct {
 	Level zapcore.Level
@@ -40,6 +50,7 @@ type Config struct {
 	Server   Server
 	Database Database
 	JWT      JWT
+	OAuth    OAuth
 	Logging  Logging
 }
 
@@ -64,6 +75,12 @@ func Load() (*Config, error) {
 			Secret:           getEnv("JWT_SECRET", "your-secret-key"),
 			AccessExpiresIn:  time.Duration(getEnvAsInt("JWT_ACCESS_EXPIRES_IN", 24)) * time.Hour,
 			RefreshExpiresIn: time.Duration(getEnvAsInt("JWT_REFRESH_EXPIRES_IN", 7)) * 24 * time.Hour,
+		},
+		OAuth: OAuth{
+			GoogleClientID:     getEnv("GOOGLE_CLIENT_ID", ""),
+			GoogleClientSecret: getEnv("GOOGLE_CLIENT_SECRET", ""),
+			FacebookAppID:      getEnv("FACEBOOK_APP_ID", ""),
+			FacebookAppSecret:  getEnv("FACEBOOK_APP_SECRET", ""),
 		},
 		Logging: Logging{
 			Level: getLogLevel(getEnv("LOG_LEVEL", "info")),
